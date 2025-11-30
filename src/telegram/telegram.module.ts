@@ -17,6 +17,7 @@ import { DatabaseModule } from '../database/database.module';
     FileGenerationService,
     PaymentService,
   ],
+  exports: [TelegramBotService],
 })
 export class TelegramModule {}
 
