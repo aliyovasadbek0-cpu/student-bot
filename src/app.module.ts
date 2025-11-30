@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TelegramModule } from './telegram/telegram.module';
 import { DatabaseModule } from './database/database.module';
+import { TelegramBotService } from './services/telegram-bot.service';
 
 @Module({
   imports: [
@@ -15,6 +16,6 @@ import { DatabaseModule } from './database/database.module';
     TelegramModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, TelegramBotService],
 })
 export class AppModule {}

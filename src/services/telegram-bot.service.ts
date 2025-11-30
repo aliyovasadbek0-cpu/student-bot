@@ -27,7 +27,23 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     if (!token) {
       throw new Error('BOT_TOKEN is required');
     }
-    this.bot = new TelegramBot(token, { polling: true });
+    
+    // Production'da webhook ishlatish, development'da polling
+    const webhookUrl = this.configService.get<string>('WEBHOOK_URL');
+    const usePolling = this.configService.get<string>('USE_POLLING') === 'true';
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // Agar webhook URL mavjud bo'lsa va production'da bo'lsak, webhook ishlatamiz
+    if (webhookUrl && isProduction && !usePolling) {
+      // Webhook rejimi
+      this.bot = new TelegramBot(token);
+      this.bot.setWebHook(webhookUrl);
+      this.logger.log(`Webhook mode: ${webhookUrl}`);
+    } else {
+      // Polling rejimi (development yoki USE_POLLING=true bo'lsa)
+      this.bot = new TelegramBot(token, { polling: true });
+      this.logger.log('Polling mode enabled');
+    }
   }
 
   async onModuleInit() {
@@ -36,7 +52,17 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    this.bot.stopPolling();
+    if (this.bot && typeof this.bot.stopPolling === 'function') {
+      this.bot.stopPolling();
+    }
+    if (this.bot && typeof this.bot.deleteWebHook === 'function') {
+      await this.bot.deleteWebHook();
+    }
+  }
+
+  async handleWebhookUpdate(update: any) {
+    // Webhook orqali kelgan update'larni qayta ishlash
+    this.bot.processUpdate(update);
   }
 
   private setupHandlers() {
